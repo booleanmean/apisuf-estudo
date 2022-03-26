@@ -1,0 +1,419 @@
+using HtmlAgilityPack;
+//using Microsoft.EntityFrameworkCore;
+//using Neuron.Data;
+//using Neuron.Models.ConsultaPli;
+using RestSharp;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Globalization;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web;
+
+using System.IO;
+
+
+//using System.Net;
+//using System.Net.Http;
+//using System.Threading.Tasks;
+
+
+/*
+using System;
+using System.IO;
+using System.Text;
+//using HtmlAgilityPack;
+using RestSharp;
+
+
+//using HtmlAgilityPack;
+//using Microsoft.EntityFrameworkCore;
+
+//using RestSharp;
+using System.Collections.Generic;
+//using System.Data.SqlClient;
+//using System.Globalization;
+using System.Linq;
+using System.Net;
+*/
+    
+
+
+//namespace Nfe_Proc.APINFION
+namespace APICET_BKEND
+{
+
+
+
+
+
+    public class APISUFRAMA
+    {
+
+
+        const string pathResponse = @"C:\Users\BINGO\OneDrive\_DEV\PROJETOS\PROCESSAMENTO\APISUF\";
+        const string pathLogs = @"C:\Users\BINGO\OneDrive\_DEV\PROJETOS\PROCESSAMENTO\APISUF\Log\";
+
+        public APISUFRAMA()
+        {
+        }
+
+        public string RESULTAPI = "";
+        /*public APISUFRAMA()
+        {
+        }*/
+
+        public static string ProcProdutos(string IE)
+        {
+                                                                      
+            
+            //https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?inscsuf=200106023
+            string result = "900"; //Unrecognized error
+            string erro   = "";          
+            //string fileName = "produtos_"+IE+".txt";
+            string textFile = pathResponse+"produtos_"+IE+".txt";
+            string jsonFile = pathResponse+"produtos_"+IE+".json";
+            string txtProdutos = "";
+            string jsonProdutos = "";
+
+ 
+            try{
+            try{
+
+                          
+                
+                if (File.Exists(textFile))
+                {                    
+                    File.Delete(textFile);
+                }
+                
+                
+                //read suframa download
+                txtProdutos = txtProdutos + "line 1" + "; " + "\r";
+                txtProdutos = txtProdutos + "line 2" + "; " + "\r";
+                File.WriteAllText(textFile, txtProdutos);
+                
+
+              
+                //Do Json
+                jsonProdutos = "{" + "\r";
+
+                string[] lines = File.ReadAllLines(textFile);  
+                
+                foreach (string line in lines)  {
+                    jsonProdutos = jsonProdutos + line + "\r";
+                }                                
+                jsonProdutos = jsonProdutos + "}";
+                File.WriteAllText(jsonFile, jsonProdutos);
+                //Console.WriteLine(line);  
+
+                
+
+                
+                //result = "200";  
+                
+                result = File.ReadAllText(jsonFile);
+                File.WriteAllText(pathLogs+"APISUFRAMA_PROC.log", "Processado com sucesso!");   
+
+
+            }
+            catch(Exception ex){
+                erro = "APISUFRAMA --> error[" + ex.Message+"]";
+                File.WriteAllText("log/APISUFRAMA_erro.log", erro);  
+            }    
+            }            
+            finally{
+                
+                //File.WriteAllText(pathResponse+fileName, txtProdutos);
+                
+               
+            }
+
+            return result;
+
+               
+        }
+
+
+
+
+
+
+
+        private static string getProdutos(string IE){
+
+
+            //GetRequestTokenAsync requi = new GetRequestTokenAsync("");
+            
+            
+         
+
+
+            string URI = "https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?";
+            //https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?inscsuf=200106023
+
+            //RestClient restClient = new RestClient("http://wwws.suframa.gov.br/servicos/")
+            RestClient client = new RestClient(URI)
+            {
+                //Proxy = new WebProxy("wcgproxy-mao:8080", true)
+                //{
+                //    UseDefaultCredentials = true
+                //},
+                //Encoding = Encoding.GetEncoding(28591),
+                //CookieContainer = new CookieContainer()
+            };
+
+            RestRequest req = new RestRequest("inscsuf=200106023", Method.Get);
+
+            Encoding encoding = Encoding.GetEncoding(28591);
+            RestResponse consultaResponse = new RestResponse
+            {
+                //ContentEncoding = "iso-8859-1"
+            };
+            //client.ExecuteAsync(req); OK
+
+            var response = client.ExecuteAsync(req);
+
+
+
+
+
+
+            
+            /*RestClient client2 = new RestClient(URI);
+            RestRequest req2 = new RestRequest("inscsuf=200106023", Method.Get);
+            Encoding encoding2 = Encoding.GetEncoding(28591);
+           
+            var response2 = client.ExecuteAsync(req);
+            
+
+            if (response2.StatusCode == HttpStatusCode.OK)
+            {
+                var queryString = HttpUtility.ParseQueryString(response2.Content);
+                //var requestToken = new RequestToken(queryString["oauth_token"], queryString["oauth_token_secret"]);
+                //return requestToken;
+            }*/
+
+
+
+
+
+
+
+
+
+            /*if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var queryString = HttpUtility.ParseQueryString(response.Content);
+                //var accessToken = new AccessToken(queryString["oauth_token"], queryString["oauth_token_secret"]);
+                //return accessToken;
+            }*/
+
+            
+            /*client.ExecuteAsync(req, response =>
+            {
+                RunOnUiThread(delegate
+                {
+                    dialog.Dismiss();
+                    var responseFacebook = response.Content;
+                    txtv1.Text = responseFacebook.ToString();        
+                    Toast.MakeText(this, "reposta", ToastLength.Long);
+                });
+            });*/
+
+            
+            //consultaResponse = client.ExecuteAsync(req);
+
+            //ExecuteAsync
+            //var response = await client.GetAsync<string>(req);
+
+/*
+            consultaResponse = restClient.Execute(req);
+            if (consultaResponse.StatusCode == HttpStatusCode.OK)
+            {
+
+            }
+            */
+
+
+
+
+            //var client = new RestClient("https://api.twitter.com/1.1");
+             //var request = new RestRequest("statuses/home_timeline.json");
+             //RestClient restClient = new RestClient("http://wwws.suframa.gov.br/servicos/")
+
+
+
+/*        readonly RestClient _client;
+
+    public GitHubClient() {
+        _client = new RestClient("https://api.github.com/")
+            .AddDefaultHeader(KnownHeaders.Accept, "application/vnd.github.v3+json");
+    }
+
+    public Task<GitHubRepo[]> GetRepos()
+        => _client.GetAsync<GitHubRepo[]>("users/aspnet/repos");
+
+*/
+            /*var client = new RestClient("https://api.twitter.com/1.1") {
+                //Authenticator = new HttpBasicAuthenticator("username", "password")
+            };
+            var request = new RestRequest("statuses/home_timeline.json");
+            var response = await client.GetAsync(request, cancellationToken);
+*/
+
+         
+
+
+            string result = "900"; 
+            return result;
+
+        }
+
+
+
+    /*private async Task<List<Record>> GetRecordsAsync(IRestRequest request)
+    {
+        IRestResponse<RecordRequestResponse> requestResponse = await _restClient.ExecuteAsync<RecordRequestResponse>(request);
+        // Nothing below this line is ever executed!
+        if (requestResponse.IsSuccessful)
+        {
+            RecordRequestResponse? employeesResponse = JsonConvert.DeserializeObject<RecordRequestResponse>(requestResponse.Content);
+            return (employeesResponse != null && employeesResponse.WasSuccessful)
+                ? employeesResponse.Records
+                    .ToList()
+                : throw new PersonioRequestException("Connected to Personio, but could not get records.");
+        }
+        else
+        {
+            throw (requestResponse.ErrorException != null)
+                ? new PersonioRequestException("Could not get records from Personio.", requestResponse.ErrorException)
+                : new PersonioRequestException("Could not get records from Personio.  Reason unknown.");
+        }
+    }*/
+
+
+        /*public async Task<double> GetBaselineAsync()
+        {
+            var Client = new RestClient();
+            IRestResponse response;
+            Client.BaseUrl = new Uri("https://apiv2.bitcoinaverage.com/indices/global/ticker/short?crypto=BTC&fiat=USD");
+            CryptoAverage BTCAvg;
+            var request = new RestRequest();
+            response = await Client.ExecuteAsync(request);
+            BTCAvg = JsonConvert.DeserializeObject<CryptoAverage>(response.Content);
+            
+            return Math.Round(BTCAvg.BTCUSD.Last, 2);
+            
+        }
+        */
+
+
+
+
+        public async Task<string> GetRequestTokenAsync(string callbackUrl)
+        {
+            
+            //string resposta = "";
+            
+            //ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => false;
+            
+            //testar
+            /*System.Net.ServicePointManager.ServerCertificateValidationCallback +=
+            delegate(object sender, System.Security.Cryptography.X509Certificates.X509Certificate certificate,
+                                    System.Security.Cryptography.X509Certificates.X509Chain chain,
+                                    System.Net.Security.SslPolicyErrors sslPolicyErrors)
+                {
+                    return true; // **** Always accept
+                };*/
+
+                //testar ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, ssl) => { return true; };
+
+    
+
+
+
+            string URI = "https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?";
+            RestClient client = new RestClient(URI);
+            //client.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;            
+            RestRequest req = new RestRequest("inscsuf=200106023", Method.Get);
+            Encoding encoding = Encoding.GetEncoding(28591);
+           
+            var response = await client.ExecuteAsync(req);
+            
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var queryString = HttpUtility.ParseQueryString(response.Content);
+                //var requestToken = new RequestToken(queryString["oauth_token"], queryString["oauth_token_secret"]);
+                //return requestToken;
+            }
+
+
+            
+            return response.ErrorException.InnerException.ToString();//response.Content;
+
+            RESULTAPI = response.ErrorException.InnerException.ToString();
+            
+            
+            /*var client =
+                new RestClient(_apiBaseUrl)
+                    {
+                        Authenticator = OAuth1Authenticator.ForRequestToken(_consumerKey, _consumerSecret, callbackUrl)
+                    };
+            var request = new RestRequest(RequestTokenPath);
+            var response = await client.ExecuteAsync(request);
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var queryString = HttpUtility.ParseQueryString(response.Content);
+                var requestToken = new RequestToken(queryString["oauth_token"], queryString["oauth_token_secret"]);
+                return requestToken;
+            }
+
+            throw new Exception("An error occured: Status code: " + response.StatusCode, response.ErrorException);
+            */
+        }
+
+
+
+
+        /*public async Task<string> GetResponseString(string text)
+        {
+            var httpClient = new HttpClient();
+
+            var parameters = new Dictionary<string, string>();
+            parameters["text"] = text;
+
+            var response = await httpClient.PostAsync(BaseUri, new FormUrlEncodedContent(parameters));
+            var contents = await response.Content.ReadAsStringAsync();
+
+            return contents;
+        }*/
+        /*And your final function call:
+
+        Task<string> result = GetResponseString(text);
+        var finalResult = result.Result;
+        Or even better:
+
+        var finalResult = await GetResponseString(text);
+*/
+
+
+
+
+
+
+
+
+
+
+    }
+
+
+    
+
+}

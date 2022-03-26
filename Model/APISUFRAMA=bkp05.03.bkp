@@ -1,0 +1,677 @@
+using System;
+using System.IO;
+using System.Text;
+using RestSharp;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Web;
+using System.Data.OleDb;
+using System.Data.Odbc;
+using System.Net;
+using System.Net.Http;
+using HtmlAgilityPack;
+
+//using System.Collections.Generic;
+//using System.Data.SqlClient;
+//using System.Globalization;
+//using HtmlAgilityPack;
+//using Microsoft.EntityFrameworkCore;
+//using Neuron.Data;
+
+
+
+
+    
+
+
+//namespace Nfe_Proc.APINFION
+namespace APICET_BKEND
+{
+
+
+
+
+
+    public class APISUFRAMA
+    {
+
+
+        const string pathResponse = @"C:\Users\BINGO\OneDrive\_DEV\PROJETOS\PROCESSAMENTO\APISUF\";
+        const string pathLogs = @"C:\Users\BINGO\OneDrive\_DEV\PROJETOS\PROCESSAMENTO\APISUF\Log\";
+
+        public APISUFRAMA()
+        {
+        }
+
+        public string RESULTAPI = "";
+        /*public APISUFRAMA()
+        {
+        }*/
+
+
+
+        //private async static void teste3(){
+        public async Task<string> procProdutos(string IE){
+
+            string textFile = pathLogs+"produtos"+IE+".txt";
+            string jsonFile = pathLogs+"produtos"+IE+".json";
+
+
+            string URI="https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?inscsuf="+IE;
+
+            using (var httpClientHandler = new HttpClientHandler())
+            {
+                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
+                using (var client = new HttpClient(httpClientHandler))
+                {
+                    // Make your request...
+
+                     
+                    
+                    var response =  await client.GetAsync(URI);
+                    
+
+                    var buffer = await response.Content.ReadAsByteArrayAsync();
+                    var byteArray = buffer.ToArray();
+                    var contents = Encoding.GetEncoding("ISO-8859-1").GetString(byteArray, 0, byteArray.Length);                                                                              
+                    File.WriteAllText(textFile, contents, Encoding.UTF8);
+                    
+                                        
+                    //Convert json
+                    string jsonText = doJsonProduto(contents, IE);
+                    File.WriteAllText(jsonFile, jsonText, Encoding.UTF8);
+
+                    return jsonText;
+
+
+                    //return contents;
+                                                                                        
+               
+
+                }
+            }
+
+
+
+            //return response.ErrorException.InnerException.ToString();
+
+        }
+
+        public async Task<string> procInsumos(string IE, string produto){
+
+            string textFile = pathResponse+"insumos"+IE+"_"+produto+".txt";
+            string jsonFile = pathResponse+"insumos"+IE+"_"+produto+".json";
+
+            string URI="https://200.198.228.134/Servicos/Estrangeiro/Consultasinternas/Siscomex/ProdutosInsumosVinculados/EST_ProdutoLista_ItensPublicos_xls.asp?";
+            string URL_REQUEST = URI + "cd_inscsuf="+IE+"&cd_produto="+produto;
+
+            
+
+            using (var httpClientHandler = new HttpClientHandler())
+            {
+                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
+                using (var client = new HttpClient(httpClientHandler))
+                {
+                                                             
+                    var response =  await client.GetAsync(URL_REQUEST);
+                    
+                    var buffer = await response.Content.ReadAsByteArrayAsync();
+                    var byteArray = buffer.ToArray();
+                    var contents = Encoding.GetEncoding("ISO-8859-1").GetString(byteArray, 0, byteArray.Length);                                                                              
+                    File.WriteAllText(textFile, contents, Encoding.UTF8);
+                                                            
+                    //Convert json
+                    string jsonText = doJsonInsumos(contents, IE, produto);
+                    File.WriteAllText(jsonFile, jsonText, Encoding.UTF8);
+
+                    return jsonText;                                                                                                                           
+                }
+            }
+        
+        }
+
+
+
+
+
+
+        private string doJsonProduto(string contents, string IE){
+
+            /*
+            [
+              {
+                "IE": "999999999",
+                "produtos": 
+                    [
+                      { }
+                    ]
+              }
+            ]   
+            */
+            
+            var qtProdutos = qtdeReg(contents);
+            string jsonStr = "[\n"+ "  {\n";
+            string comma = "";
+            
+            
+            Produto prod = new Produto();
+
+            var reader = new StringReader(contents);
+            int qtLine = 0;
+            for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+            {
+                qtLine++;
+                if(qtLine == 1){
+                  prod.IE = line.Substring(0, 9);
+                  jsonStr = jsonStr +
+                  jsonReg("IE", prod.IE, 4) + ", \n"+
+                  jsonReg("qtde_produtos", qtProdutos.ToString(), 4) + ", \n"+
+                  "    \"produtos\": [";
+                }
+                
+                prod.produto = line.Substring(9, 11);
+                var tam = line.Trim().Length;
+                prod.descricao = line.Substring(30, line.Trim().Length-30);
+                
+                if(qtLine > 1){ comma=", "; }else{ comma=""; };
+
+                jsonStr = jsonStr +comma+ "\n" + 
+                "      { \n" +  
+                        jsonReg("produto", prod.produto, 8) + ", " + jsonReg("descricao", prod.descricao, 0) +"\n"+
+                "      }" ; 
+            }
+
+             jsonStr = jsonStr+ "\n" + 
+             "    ] \n"+
+             "  } \n"+
+             "]";
+
+
+            
+            return jsonStr;
+
+            
+        }
+
+
+        private string doJsonInsumos(string contents, string IE, string produto){
+
+
+
+
+            HtmlDocument doc = new HtmlDocument();            
+            doc.LoadHtml(contents);
+            //string tabela = "";
+            //string cellID = "";
+            string tableID = "";            
+            string field = "";
+            string tdValue = "";
+            string registro ="";
+            bool rodape = false;
+            int tab = 0;
+            int i = 0;
+            int j = 0;
+            int qtLine = 0;
+            string comma = "";
+            string jsonStr = "";
+            string jsonStrItens = "";
+            
+            foreach (HtmlNode table in doc.DocumentNode.SelectNodes("//table")) {                
+                
+                tableID = table.Id;               
+                foreach (HtmlNode row in table.SelectNodes("tr")) {                    
+                    i++;
+                    j=0;
+                    tdValue = "";
+                    field = "";
+                    
+                    //Escreve linha do registro
+                    if (i >=6){
+
+                        qtLine++;
+                        registro = "";
+                        foreach (HtmlNode cell in row.SelectNodes("th|td")) { 
+                            
+                            j++;                                                                                    
+                            switch(j){
+                                case 1: field = "NCM"; break;
+                                case 2: field = "detalhe"; break;
+                                case 3: field = "descricao"; break;                                
+                            }                                                        
+                            //cellID = "["+i.ToString()+", "+j.ToString()+"] = ";
+                            //tabela = tabela + cellID + cell.InnerText;                                                        
+                            
+                            //pega valor
+                            tdValue = cell.InnerText.Trim();
+                            tdValue = tdValue.Replace('"', '^');
+                            //tdValue = tdValue.Replace("\"", "#");
+                            if ( field=="detalhe" ) { tdValue.PadLeft(4,'0'); };
+                                                                                                                                                                                                    
+                            if(j > 1){ comma=", "; tab=0; }else{ comma=""; tab=8; };
+                            registro = registro +comma+ jsonReg(field, tdValue, tab);
+                            
+                            if( tdValue=="Empresa:" ) { rodape=true;};
+                                                                                                    
+                        }
+
+                        if (rodape){break;};
+                        //adiciona linha do registro ao Json:                                              
+                        if(qtLine > 1){ comma=", \n"; }else{ comma=""; };
+                        jsonStrItens = jsonStrItens + comma +
+                        "      { \n" + 
+                                 registro + "\n" +
+                        "      }";
+                        
+
+                        
+                    }
+                }
+            }
+           
+            //File.WriteAllText(pathLogs+"repostaHTML.txt", jsonStr, Encoding.UTF8);
+            //File.WriteAllText(pathResponse+"repostaHTML.txt", jsonStr, Encoding.UTF8);
+                      
+            
+            jsonStr = 
+            "[\n"+ "  {\n";
+            jsonStr = jsonStr +
+            jsonReg("IE", IE, 4) + ", \n"+
+            jsonReg("produto", produto, 4) + ", \n"+
+            jsonReg("qtde_insumos", (qtLine-1).ToString(), 4) + ", \n"+
+            "    \"insumos\": [ \n" +
+                   jsonStrItens + "\n" +    
+            "    ] \n"+
+            "  } \n"+
+            "]";
+
+
+           return jsonStr;
+
+
+
+          
+
+
+
+
+
+            /*   testes OK 
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(@"<html><body><p><table id=""foo""><tr><th>hello</th></tr><tr><td>world</td></tr></table></body></html>");
+            foreach (HtmlNode table in doc.DocumentNode.SelectNodes("//table")) {
+                Console.WriteLine("Found: " + table.Id);
+                foreach (HtmlNode row in table.SelectNodes("tr")) {
+                    Console.WriteLine("row");
+                    foreach (HtmlNode cell in row.SelectNodes("th|td")) {
+                        Console.WriteLine("cell: " + cell.InnerText);
+                    }
+                }
+            }
+
+            var contents2 = File.ReadAllText(pathResponse+"tablesample.txt");           
+            doc = new HtmlDocument();
+            doc.LoadHtml(contents2);
+            foreach (HtmlNode table in doc.DocumentNode.SelectNodes("//table")) {
+                Console.WriteLine("Found: " + table.Id);
+                foreach (HtmlNode row in table.SelectNodes("tr")) {
+                    Console.WriteLine("row");
+                    foreach (HtmlNode cell in row.SelectNodes("th|td")) {
+                        Console.WriteLine("cell: " + cell.InnerText);
+                    }
+                }
+            }
+            */
+
+
+
+
+            /* Dind't work with this
+            var doc = new HtmlDocument();
+            doc.LoadHtml(contents);
+            var linhas = doc.DocumentNode.SelectNodes("table/tr[1]/td/table/tr[2]/td[2]/table[2]/tr");
+            if (linhas != null)
+            {
+                foreach (var linha in linhas)
+                {
+                    var colunas = linha.SelectNodes("td");
+                    if (colunas != null && colunas.Count > 2 && colunas.First().InnerText.Trim() != "Nº da PLI")
+                    {
+
+                    }
+                }
+            }
+
+            */
+
+
+        }
+
+        private string jsonReg(string field, string value, int tabSize){
+                    
+            string jsonRegister = "\""+field+"\": ";
+            jsonRegister = jsonRegister + "\""+value+"\"";
+            string tab = "".PadLeft(tabSize, ' ');
+            jsonRegister = tab + jsonRegister;
+            return jsonRegister;
+
+        }
+
+        private int qtdeReg(string contents){
+
+            //var qtLines = contents.Split('\n').Length;
+            int qtLines = 0;
+
+            var reader = new StringReader(contents);            
+            for (string line = reader.ReadLine(); line != null; line = reader.ReadLine())
+            {                                
+                var key = line.Substring(0, 1);
+                if(key != " "){
+                 qtLines++;
+                }
+            }
+
+            return qtLines;
+
+        }
+
+
+
+        public static string ProcProdutos0(string IE)
+        {
+                                                                      
+            
+            //https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?inscsuf=200106023
+            string result = "900"; //Unrecognized error
+            string erro   = "";          
+            //string fileName = "produtos_"+IE+".txt";
+            string textFile = pathResponse+"produtos_"+IE+".txt";
+            string jsonFile = pathResponse+"produtos_"+IE+".json";
+            string txtProdutos = "";
+            string jsonProdutos = "";
+
+ 
+            try{
+            try{
+
+                          
+                
+                if (File.Exists(textFile))
+                {                    
+                    File.Delete(textFile);
+                }
+                
+                
+                //read suframa download
+                txtProdutos = txtProdutos + "line 1" + "; " + "\r";
+                txtProdutos = txtProdutos + "line 2" + "; " + "\r";
+                File.WriteAllText(textFile, txtProdutos);
+                
+
+              
+                //Do Json
+                jsonProdutos = "{" + "\r";
+
+                string[] lines = File.ReadAllLines(textFile);  
+                
+                foreach (string line in lines)  {
+                    jsonProdutos = jsonProdutos + line + "\r";
+                }                                
+                jsonProdutos = jsonProdutos + "}";
+                File.WriteAllText(jsonFile, jsonProdutos);
+                //Console.WriteLine(line);  
+
+                
+
+                
+                //result = "200";  
+                
+                result = File.ReadAllText(jsonFile);
+                File.WriteAllText(pathLogs+"APISUFRAMA_PROC.log", "Processado com sucesso!");   
+
+
+            }
+            catch(Exception ex){
+                erro = "APISUFRAMA --> error[" + ex.Message+"]";
+                File.WriteAllText("log/APISUFRAMA_erro.log", erro);  
+            }    
+            }            
+            finally{
+                
+                //File.WriteAllText(pathResponse+fileName, txtProdutos);
+                
+               
+            }
+
+            return result;
+
+               
+        }
+
+
+
+        private static string getProdutos(string IE){
+
+
+            //GetRequestTokenAsync requi = new GetRequestTokenAsync("");
+        
+            string URI = "https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?";
+            //https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?inscsuf=200106023
+
+            //RestClient restClient = new RestClient("http://wwws.suframa.gov.br/servicos/")
+            RestClient client = new RestClient(URI)
+            {
+                //Proxy = new WebProxy("wcgproxy-mao:8080", true)
+                //{
+                //    UseDefaultCredentials = true
+                //},
+                //Encoding = Encoding.GetEncoding(28591),
+                //CookieContainer = new CookieContainer()
+            };
+
+            RestRequest req = new RestRequest("inscsuf=200106023", Method.Get);
+
+            Encoding encoding = Encoding.GetEncoding(28591);
+            RestResponse consultaResponse = new RestResponse
+            {
+                //ContentEncoding = "iso-8859-1"
+            };
+            //client.ExecuteAsync(req); OK
+
+            var response = client.ExecuteAsync(req);
+
+
+
+
+            string result = "900"; 
+            return result;
+
+        }
+
+
+
+        public async Task<string> GetRequestTokenAsync(string callbackUrl)
+        {
+                          
+            string URI = "https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?";
+            RestClient client = new RestClient(URI);
+            //client.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;            
+            RestRequest req = new RestRequest("inscsuf=200106023", Method.Get);
+            Encoding encoding = Encoding.GetEncoding(28591);
+           
+            var response = await client.ExecuteAsync(req);
+            
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var queryString = HttpUtility.ParseQueryString(response.Content);
+                //var requestToken = new RequestToken(queryString["oauth_token"], queryString["oauth_token_secret"]);
+                //return requestToken;
+            }
+
+
+            return response.ErrorException.InnerException.ToString();//response.Content;
+            //RESULTAPI = response.ErrorException.InnerException.ToString();
+            
+    
+        }
+
+
+
+
+        public async Task<string> GetResponseString(string text)
+        {
+           
+
+            string URI = "https://200.198.228.134/servicos/estrangeiro/consultasinternas/Siscomex/GeracaoArquivoTexto/EST_GeracaoArqTxtEmpresaGerador.asp?";
+            RestClient client = new RestClient(URI);
+            
+            
+            //client.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+            //client.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;            
+            RestRequest req = new RestRequest("inscsuf=200106023", Method.Get);
+            req.AddHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36");
+            Encoding encoding = Encoding.GetEncoding(28591);
+            //var handler = new HttpClientHandler();
+            
+           //---handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
+           
+            var response = await client.ExecuteAsync(req);
+            
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var queryString = HttpUtility.ParseQueryString(response.Content);
+                return response.Content;
+                //var requestToken = new RequestToken(queryString["oauth_token"], queryString["oauth_token_secret"]);
+                //return requestToken;
+            }else
+            {
+                return response.ErrorException.InnerException.ToString();
+            }
+
+
+            //var response = await httpClient.PostAsync(BaseUri, new FormUrlEncodedContent(parameters));
+            //var contents = response.Content;//HttpUtility.ParseQueryString(response.Content);
+            //var contents = await response.Content.ReadAsStringAsync();
+
+            //return contents;
+           
+        }
+
+
+        /*public async Task<string> GetResponseString(string text)
+        {
+            var httpClient = new HttpClient();
+
+            var parameters = new Dictionary<string, string>();
+            parameters["text"] = text;
+
+            var response = await httpClient.PostAsync(BaseUri, new FormUrlEncodedContent(parameters));
+            var contents = await response.Content.ReadAsStringAsync();
+
+            return contents;
+        }*/
+        /*And your final function call:
+
+        Task<string> result = GetResponseString(text);
+        var finalResult = result.Result;
+        Or even better:
+
+        var finalResult = await GetResponseString(text);
+*/
+
+
+
+
+
+        public string downloadLista(){
+
+            string resultado = "mdb baixado";
+
+
+            //string stringConn = @"Driver={Microsoft Access Driver (*.mdb)};DBQ=c:\DATA\pli_suframa.mdb";
+            string stringConn= "DSN=suframa";
+
+            try
+            {
+                OdbcConnection connection = new OdbcConnection(stringConn);
+                connection.Open();
+                //myCommand.Connection.Open();
+            }
+            catch (OdbcException e)
+            {
+                     Console.WriteLine("Error: {0}", e.Errors[0].Message);
+            }
+
+            return "---";
+
+            //try
+            //{
+
+               // OdbcConnection connection = new OdbcConnection(stringConn);
+                //connection.Open();
+                //using (OdbcConnection connection = new OdbcConnection(connectionString))
+                //{
+                //command.Connection = connection;
+                
+                //command.ExecuteNonQuery();
+                //OdbcCommand MyCommand = new OdbcCommand("select * from SUFNCM", connection);                
+            /*}
+            catch(OdbcConnection e)            
+            {
+                Console.WriteLine("Error: {0}", e.Errors[0].Message);
+            }*/
+
+
+           
+
+
+
+
+            OleDbConnection aConnection = new OleDbConnection(@"Provider=Microsoft.Jet.OLEDB.4.0;Data Source=c:\DATA\pli_suframa.mdb");
+
+            
+            OleDbCommand aCommand = new OleDbCommand("select * from SUFNCM", aConnection);
+
+            try
+            {
+                aConnection.Open();
+                //cria o objeto datareader para fazer a conexao com a tabela
+                OleDbDataReader dr = aCommand.ExecuteReader();
+                Console.WriteLine("Os valores retornados da tabela são : ");
+
+                //Faz a interação com o banco de dados lendo os dados da tabela
+                while(dr.Read())
+                {
+                    //Console.WriteLine(dr[""]);
+                    Console.WriteLine(dr.GetString(0));                    
+                }
+                //fecha o reader
+                dr.Close();
+                    //fecha a conexao
+                aConnection.Close();
+            //pausa
+               //Console.Readkey();
+            }
+            catch(OleDbException e)
+            {
+                Console.WriteLine("Error: {0}", e.Errors[0].Message);
+            }
+
+
+            return resultado;
+
+
+
+        }
+
+
+
+
+
+    }
+
+
+    
+
+}
