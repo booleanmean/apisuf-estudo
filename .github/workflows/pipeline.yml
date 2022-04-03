@@ -42,7 +42,7 @@ jobs:
         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: apicet
-        environment_name: apicet-dev
+        environment_name: apicet-env
         region: us-east-1
         version_label: ${{ github.run_id }}
         version_description: ${{ github.sha }}
