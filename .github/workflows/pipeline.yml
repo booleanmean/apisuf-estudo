@@ -1,10 +1,11 @@
 
 name: Deploy APICET on AWS-Beanstalk
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  echo push:
+  echo   branches: [ master ]
+  echo pull_request:
+  echo   branches: [ master ]
+  workflow_dispatch:
 
 
 jobs:
