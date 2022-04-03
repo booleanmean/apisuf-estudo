@@ -28,3 +28,10 @@ dotnet add package RestSharp --version 107.3.0
 
 To document Swagger:
 dotnet add package Swashbuckle.AspNetCore 
+
+
+  push:
+     branches: [ master ]
+   pull_request:
+     branches: [ master ]
+  workflow_dispatch:
