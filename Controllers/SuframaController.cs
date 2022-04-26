@@ -41,7 +41,7 @@ namespace APICET_BKEND.Controllers
 
 
         /// <summary>
-        /// Pega produtos suframa da Inscrição Estadual (IE)
+        /// Pega produtos suframa da Inscrição Suframa (IS)
         /// </summary>
         /// <param name="IE">Inscricao Estadual</param>
         /// <returns></returns>

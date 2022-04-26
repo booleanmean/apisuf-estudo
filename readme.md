@@ -22,11 +22,16 @@ API CET - Backend
 
 
 Project Packages:
+
 dotnet add package HtmlAgilityPack --version 1.11.42
+
 dotnet add package RestSharp --version 107.3.0
 
 
+
+
 To document Swagger:
+
 dotnet add package Swashbuckle.AspNetCore 
 
 
