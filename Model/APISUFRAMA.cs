@@ -55,7 +55,7 @@ namespace APICET_BKEND
             ProdutosIE produtos;
 
             
-            if(ENV.MyEnv=="PRD"){
+            if(ENV.MyEnv=="PRD1"){
                 jsonText = doJsonProdutoDB(IE); 
                 produtos = JsonSerializer.Deserialize<ProdutosIE>(jsonText)!;
                 return produtos;
