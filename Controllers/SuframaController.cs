@@ -54,7 +54,7 @@ namespace APICET_BKEND.Controllers
         {
 
             
-            if(IE.Trim().Length != 9){                 
+            if(IS.Trim().Length != 9){                 
                 return BadRequest();                 
             }
             
@@ -67,7 +67,7 @@ namespace APICET_BKEND.Controllers
             //return jsonStr;
 
 
-            ProdutosIE prd = await suf.procProdutos(IE); //200106023
+            ProdutosIE prd = await suf.procProdutos(IS); //200106023
             
             
            
@@ -77,7 +77,7 @@ namespace APICET_BKEND.Controllers
 
             if (prd.qtde_produtos == "0"){
                 //return NoContent();
-                return NotFound( new {IE = IE} );
+                return NotFound( new {IS = IS} );
             }
 
             return Ok(prd);
