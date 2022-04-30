@@ -43,14 +43,14 @@ namespace APICET_BKEND.Controllers
         /// <summary>
         /// Pega produtos suframa da Inscrição Suframa (IS)
         /// </summary>
-        /// <param name="IE">Inscricao Estadual</param>
+        /// <param name="IS">Inscricao Estadual</param>
         /// <returns></returns>
-        [HttpGet("produtos/{IE}")]
+        [HttpGet("produtos/{IS}")]
         [Produces(MediaTypeNames.Application.Json)]        
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]                
-        public async Task<ActionResult<ProdutosIE>> Get(string IE) ////public async Task<string> Get(string IE)
+        public async Task<ActionResult<ProdutosIE>> Get(string IS) ////public async Task<string> Get(string IE)
         {
 
             
