@@ -648,7 +648,7 @@ namespace APICET_BKEND
              
                                        
             
-             //if (qtInsumos > 0){
+             if (qtInsumos > 0){
             
                 jsonStr =                 
                 "{\n";
@@ -662,9 +662,9 @@ namespace APICET_BKEND
                 "}";
                 
 
-            //} else {
-            //  jsonStr = "Nenhum insumo encontrado para a Inscrição Estadual/produto \""+IE.Trim()+"\""+ "/\""+produto+"\"";
-            //}
+            } else {
+              jsonStr = "Nenhum insumo encontrado para a Inscrição Estadual/produto \""+IE.Trim()+"\""+ "/\""+produto+"\"";
+            }
                                                                 
             return jsonStr;
 

@@ -113,22 +113,22 @@ namespace APICET_BKEND.Controllers
         
         
         /// <summary>
-        /// Pega insumos por IE/produto
+        /// Pega insumos por IS/produto
         /// </summary>
-        /// <param name="IE">Inscricao Estadual</param>
+        /// <param name="IS">Inscricao Suframa</param>
         /// <param name="produto">Produto (nnnn)</param>
         /// <returns></returns> 
-        [HttpGet("insumos/{IE}/{produto}")]
+        [HttpGet("insumos/{IS}/{produto}")]
         [Produces(MediaTypeNames.Application.Json)]        
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]      
-        public async Task<ActionResult<InsumosIE>> Get(string IE, string produto)
+        public async Task<ActionResult<InsumosIE>> Get(string IS, string produto)
         {
 
 
 
-            if(IE.Trim().Length != 9){ return BadRequest(); }
+            if(IS.Trim().Length != 9){ return BadRequest(); }
             if(produto.Trim().Length != 4){ return BadRequest(); }
 
 
@@ -136,12 +136,12 @@ namespace APICET_BKEND.Controllers
             
             
             APISUFRAMA suf = new APISUFRAMA();                        
-            InsumosIE insumos = await suf.procInsumos(IE, produto); //"200106023", "0001"
+            InsumosIE insumos = await suf.procInsumos(IS, produto); //"200106023", "0001"
 
 
 
             if (insumos.qtde_insumos == "0"){                
-                return NotFound( new {IE = IE} );
+                return NotFound( new {IS = IS, PRD = produto, MSG = "Não há insumo para Iscrição/Produto!"} );
             }
 
 
