@@ -552,7 +552,12 @@ namespace APICET_BKEND
                         if (rodape){break;};
                         //adiciona linha do registro ao Json:                                              
                         if(qtLine > 1){ comma=", \n"; }else{ comma=""; };
-                        jsonStrItens = jsonStrItens + comma + "        { " +registro+ " }";                        
+                        jsonStrItens = jsonStrItens + comma + "        { " +registro+ " }";   
+
+
+
+                        //@TESTE
+                        if(qtLine > 10) {break;};
                         
                     }
                 }
