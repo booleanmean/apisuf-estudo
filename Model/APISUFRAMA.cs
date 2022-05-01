@@ -163,6 +163,7 @@ namespace APICET_BKEND
             }
             
             //return jsonText;
+            insumos = JsonSerializer.Deserialize<InsumosIE>(jsonText)!;
             return insumos;
 
         
