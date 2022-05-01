@@ -17,6 +17,7 @@ namespace APICET_BKEND
     {
 
         public const string MyEnv = "PRD";
+        public const bool saveDB = false;
         public const string pathResponse = @"C:\Users\BINGO\OneDrive\_DEV\PROJETOS\PROCESSAMENTO\APISUF\";
         public const string pathLogs = @"C:\Users\BINGO\OneDrive\_DEV\PROJETOS\PROCESSAMENTO\APISUF\Log\";
         

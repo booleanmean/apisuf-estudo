@@ -712,6 +712,9 @@ namespace APICET_BKEND
 
         public static void gravaInsumo(string JsonInsumo){
 
+            if(!ENV.saveDB){
+                return;
+            }
 
             //JsonInsumo = File.ReadAllText(pathResponse+"insumos200106023_0001b.json"); //**teste
             InsumosIE insumosIE = JsonSerializer.Deserialize<InsumosIE>(JsonInsumo)!;
