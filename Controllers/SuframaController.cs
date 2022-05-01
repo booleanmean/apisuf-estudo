@@ -141,7 +141,7 @@ namespace APICET_BKEND.Controllers
 
 
             if (insumos.qtde_insumos == "0"){                
-                return NotFound( new {IS = IS, PRD = produto, MSG = "Não há insumo para Iscrição/Produto!"} );
+                return NotFound( new {IS = IS, PRD = produto, MSG = "Não há insumos para Iscrição/Produto!"} );
             }
 
 

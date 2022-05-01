@@ -119,7 +119,7 @@ namespace APICET_BKEND
             string erro;
             InsumosIE insumos;
 
-            if(ENV.MyEnv=="PRD"){
+            if(ENV.MyEnv=="PRD1"){
                 jsonText = doJsonInsumosDB(IE, produto);                 
                 insumos = JsonSerializer.Deserialize<InsumosIE>(jsonText)!;
                 return insumos;
