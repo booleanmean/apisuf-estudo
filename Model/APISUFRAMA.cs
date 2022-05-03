@@ -116,7 +116,7 @@ namespace APICET_BKEND
             string URI="https://200.198.228.134/Servicos/Estrangeiro/Consultasinternas/Siscomex/ProdutosInsumosVinculados/EST_ProdutoLista_ItensPublicos_xls.asp?";
             string URL_REQUEST = URI + "cd_inscsuf="+IE+"&cd_produto="+produto;
             string jsonText;
-            string erro;
+            string erro, jsonStr;
             InsumosIE insumos;
 
             if(ENV.MyEnv=="PRD1"){
@@ -157,6 +157,21 @@ namespace APICET_BKEND
                 jsonText = "APISUFRAMA --> [procInsumos/"+IE+"/"+produto+"] error[" +erro+" ]";
                 saveFile("log/APISUFRAMA_erro.log", jsonText, Encoding.UTF8);                                
                 //jsonText = doJsonInsumosDB(IE, produto); 
+
+
+                //Monta json vazio
+                jsonStr = 
+                "{\n";
+                jsonStr = jsonStr +
+                jsonReg("IE", "IEerroHttp", 4) + ", \n"+
+                jsonReg("produto", produto, 4) + ", \n"+
+                jsonReg("qtde_insumos", "1", 4) + ", \n"+           
+                "    \"insumos\": [ \n" +
+                    "" + "\n" +    
+                "    ] \n"+
+                "}";
+                jsonText = jsonStr;
+
             }
             finally{
                 
